@@ -1,0 +1,76 @@
+.pos 0x0
+           irmovl $0,   %ecx     # i = 0
+           irmovl $0,   %ebx     # c = 0
+           irmovl $0,   %edx     # offset for arr
+           irmovl $10,  %edi     # n = 10
+           irmovl $0,   %esi     # sum = 0
+           
+init:      rrmovl %edi, %eax     # %eax = n
+           subl   %ecx, %eax     # %eax = n-i
+           jge    outloop        # while (n-i>=0)
+
+outloop:   irmovl $0,   %esp     # j = 0
+           rrmovl %ecx, %eax     # %eax = i
+           subl   %ebx, %eax     # %eax = i-c
+           jge    midloop        # while (i-c>=0)
+           
+           irmovl arr,  %ebp     # %ebp = base of array
+           addl   %edx, %ebp     # %ebp = base + offset
+           rmmovl %esi, (%ebp)   # arr[i] = current sum
+           irmovl $4,   %eax     # %eax = 4
+           addl   %eax, %edx     # increment offset by 4 bytes
+           
+           irmovl $1,   %eax     # %eax = 1
+           addl   %eax, %ecx     # i++
+           jmp    outloop
+           
+           
+midloop:   irmovl $2,   %eax     # %eax = 2 / get ready to subtract 2
+           subl   %eax, %esi     # sum-=2
+           rrmovl %ebx, %eax     # %eax = c
+           subl   %esp, %eax     # %eax = c-j
+           jg     inloop
+           irmovl $1,   %eax     # get ready to add 1
+           addl   %eax, %ebx     # c++
+           jmp    outloop
+           
+inloop:    irmovl $5,   %eax     # %eax = 5 / get ready to add 5
+           addl   %eax, %esi     # sum += 5
+           irmovl $1,   %eax     # %eax = 1, get ready to add 1
+           addl   %eax, %esp     # j++
+           rrmovl %ebx, %eax     # %eax = c
+           subl   %esp, %eax     # %eax = c-j
+           jg     inloop
+           
+           irmovl $1,   %eax     # %eax = 1
+           addl   %eax, %ebx     # c++
+           rrmovl %ecx, %eax     # %eax = i
+           subl   %ebx, %eax     # %eax = i-c
+           jge    midloop        # while (i-c>=0)
+           
+           irmovl arr,  %ebp     # %ebp = base of array
+           addl   %edx, %ebp     # %ebp = base + offset
+           rmmovl %esi, (%ebp)   # arr[i] = current sum
+           irmovl $4,   %eax     # %eax = 4
+           addl   %eax, %edx     # increment offset by 4 bytes
+           
+           
+           irmovl $1,   %eax     # %eax = 1
+           addl   %eax, %ecx     # i++
+           rrmovl %edi, %eax     # %eax = n
+           subl   %ecx, %eax     # %eax = n-i
+           jge    outloop        # while (n-i>=0)
+           
+           rmmovl %esi, 4(%ebp)  # save sum at end of arr
+           
+           halt
+           
+.align 4
+arr:
+           
+           
+           
+           
+            
+           
+           

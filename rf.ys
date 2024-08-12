@@ -1,0 +1,208 @@
+.pos 0x0
+
+# Alex Christensen
+# 4.18.24
+# Recursive Program
+# Includes a multiplication function utilizing repeated addition
+# and a recursive function which utilizes the multiplication. 
+
+main:
+    irmovl stack,   %esp    # set stack ptr
+    irmovl input,   %esi    # input
+    irmovl output,  %edi    # output
+    
+    mrmovl (%esi),  %ecx    # %ecx holds values form input (x)
+    
+mainloop:
+    irmovl $0,      %eax    # get ready to check if x<0
+    addl   %eax,    %ecx    # set flag
+    jl     ab               # if negative, abs(x) = -x
+    rrmovl %ecx,    %ebx    # elif positive, abs(x) = x
+
+esc:
+    irmovl $0,      %eax    # get ready to test value for 0
+    addl   %eax,    %ecx    # set zero flag
+    je     end              # if 0, jump to end
+    
+    irmovl $0x1,    %eax    # get ready to test for odd
+    andl   %ecx,    %eax    # if lsb is 1, value is odd
+    jne    odd              # jump to odd, otherwise even
+    
+even:                       # even, call rf
+    pushl %ebx              # save value
+    pushl %ebx              # push argument
+    
+    call  rf
+    
+    popl  %ebx              # pop argument
+    popl  %ebx              # restore value
+    
+    jmp   endloop
+
+odd:                        # odd, call mult
+    pushl %ebx              # save value
+    pushl %ebx              # push argument x
+    pushl %ebx              # push argument y
+    
+    call  mult
+    
+    popl  %ebx              # pop argument
+    popl  %ebx              # restore value
+    
+    jmp   endloop
+    
+ab:
+    irmovl $0,      %ebx    # get ready to subtract from 0
+    subl   %ecx,    %ebx    # ebx = abs(x)
+    jmp    esc
+    
+    
+endloop:
+    rmmovl %ecx,    (%edi)  # store value in output
+    
+    irmovl $4,       %edx   # get ready to set next address
+    addl   %edx,     %edi   # set new output address
+    
+    rmmovl %eax,    (%edi)  # store return value in output
+    
+    addl   %edx,     %esi   # set new input address
+    addl   %edx,     %edi   # set new output address
+    
+    mrmovl (%esi),   %ecx   # set ecx to next input val (x)
+    
+    jmp    mainloop
+    
+
+end:
+    halt
+    
+    
+    
+    
+    
+    
+rf:
+    pushl  %ebp             # prologue
+    rrmovl %esp,    %ebp
+    
+    pushl  %edi             # save edi, esi, ecx, edx, ebx
+    pushl  %esi
+    pushl  %ecx
+    pushl  %edx
+    pushl  %ebx
+    
+    mrmovl 12(%ebp), %edi    # edi = param(n)
+    
+    irmovl $0,      %esi    # get ready to check if n=0
+    addl   %esi,    %edi
+    je     zero
+    
+    irmovl $1,      %esi    # get ready to check if n=1
+    subl   %edi,    %esi
+    je     one
+    
+    #return rf(n-1)*rf(n-2) goes here...
+    rrmovl %edi,    %ecx    # ecx = n
+    irmovl $1,      %esi    # get ready to subtract 1
+    subl   %esi,    %ecx    # ecx = n-1
+    
+    rrmovl %edi,    %edx    # edx = n
+    irmovl $2,      %esi    # get ready to subtract 2
+    subl   %esi,    %edx    # edx = n-2
+    
+    pushl  %ecx             # save ecx
+    pushl  %ecx             # push argument
+    
+    call   rf
+    
+    popl   %ecx             # pop argument
+    popl   %ecx             # restore value
+    
+    rrmovl %eax,    %ebx    # store return val of rf
+    
+    
+    pushl  %edx             # save edx
+    pushl  %edx             # push argument
+    
+    call   rf
+    
+    popl   %edx             # pop argument
+    popl   %edx             # restore value
+    
+    pushl  %eax             # push argument
+    pushl  %ebx             # push argument
+    
+    call   mult
+    
+    popl   %ebx             # pop argument
+    popl   %ebx             # pop argument             
+    
+    
+    jmp else
+    
+zero:
+    irmovl $1,   %eax
+    jmp else
+    
+one:
+    irmovl $2,   %eax
+    
+else:
+    popl   %ebx
+    popl   %edx
+    popl   %ecx
+    popl   %esi             # restore edx, ecx, esi, edi
+    popl   %edi
+    
+    popl   %ebp             # epilogue
+    ret
+
+
+mult:
+    pushl  %ebp             # prologue
+    rrmovl %esp,    %ebp
+    
+    pushl  %edi             # save edi
+    pushl  %esi             # save esi
+    pushl  %ecx             # save ecx
+    
+    mrmovl 8(%ebp), %edi    # ret = param(x)
+    mrmovl 12(%ebp), %esi   # esi = param(y)
+    irmovl $1,      %ecx    # get ready to subtract 1
+    subl   %ecx,    %esi    # y-=1
+
+    rrmovl %edi,    %eax    # eax = x
+    
+while:
+    irmovl $0,      %ecx    # get ready to check if y>0
+    addl   %ecx,    %esi    # set flag
+    jle     continue
+    
+    addl   %edi,    %eax
+    irmovl $1,      %ecx    # get ready to subtract 1
+    subl   %ecx,    %esi    # y-=1
+    jmp    while
+    
+continue:
+    popl   %ecx             # restore ecx
+    popl   %esi             # restore esi
+    popl   %edi             # restore edi
+    
+    popl   %ebp             # epilogue
+    ret
+
+.align 4
+
+input:
+.long -6
+.long 4
+.long 5
+.long -7
+.long 8
+.long 0
+
+output:
+    
+.pos 0x400
+stack:
+    
